@@ -15,7 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Spacing } from "../theme";
 import { useAuth } from "../lib/auth";
-import { addSchedule, listSchedule, ScheduleItem } from "../lib/data";
+import { addSchedule, deleteSchedule, listSchedule, ScheduleItem } from "../lib/data";
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -41,6 +41,21 @@ export default function Schedule() {
   }, [load]);
 
   const dayClasses = classes.filter((c) => c.day === selectedDay).sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+  const removeClass = (item: ScheduleItem) => {
+    Alert.alert("Delete class?", item.name, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const { error } = await deleteSchedule(item.id);
+          if (error) Alert.alert("Could not delete class", error);
+          else load();
+        },
+      },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -75,7 +90,12 @@ export default function Schedule() {
                 <Text style={styles.timeEnd}>{c.end_time}</Text>
               </View>
               <View style={styles.card}>
-                <Text style={styles.cardName}>{c.name}</Text>
+                <View style={styles.cardHead}>
+                  <Text style={styles.cardName}>{c.name}</Text>
+                  <TouchableOpacity onPress={() => removeClass(c)} style={styles.iconBtn}>
+                    <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                  </TouchableOpacity>
+                </View>
                 {!!c.professor && <Meta icon="person-outline" text={c.professor} />}
                 {!!c.room && <Meta icon="location-outline" text={c.room} />}
               </View>
@@ -219,7 +239,9 @@ const styles = StyleSheet.create({
   timeEnd: { color: Colors.textMuted, fontSize: 11 },
   line: { width: 2, flex: 1, minHeight: 50, marginVertical: 4, borderRadius: 1, backgroundColor: Colors.border },
   card: { flex: 1, borderRadius: Radius.lg, padding: 14, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
-  cardName: { color: Colors.text, fontSize: 16, fontWeight: "800", marginBottom: 6 },
+  cardHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
+  cardName: { flex: 1, color: Colors.text, fontSize: 16, fontWeight: "800" },
+  iconBtn: { width: 30, height: 30, borderRadius: 8, justifyContent: "center", alignItems: "center", backgroundColor: Colors.surfaceLight },
   cardMeta: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 3 },
   cardText: { color: Colors.textMuted, fontSize: 12 },
   empty: { alignItems: "center", paddingTop: 80, gap: 8 },

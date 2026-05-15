@@ -1,23 +1,23 @@
 export const Colors = {
-  primary: '#D6D3C8',
-  primaryDark: '#BFB9A8',
-  secondary: '#8F9691',
-  accent: '#C9B99A',
-  success: '#8DA394',
-  danger: '#C88484',
-  warning: '#C6A96C',
+  primary: '#4F8CFF',
+  primaryDark: '#2F6FE8',
+  secondary: '#6DD3B5',
+  accent: '#F5B84B',
+  success: '#43B581',
+  danger: '#F06464',
+  warning: '#F5B84B',
 
-  bg: '#0E0F0E',
-  surface: '#171816',
-  surfaceLight: '#20211F',
-  border: '#30312E',
+  bg: '#0B0D12',
+  surface: '#151922',
+  surfaceLight: '#1D2430',
+  border: '#2A3140',
 
-  text: '#F3F1EA',
-  textMuted: '#A7A49A',
-  textDim: '#747168',
+  text: '#F7F9FC',
+  textMuted: '#AEB8C8',
+  textDim: '#697386',
 
-  mutedFill: '#262722',
-  elevated: '#1D1E1B',
+  mutedFill: '#242B38',
+  elevated: '#10141C',
 };
 
 export const Spacing = {

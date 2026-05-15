@@ -4,7 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Colors, Radius, Spacing } from "./theme";
 import { useAuth } from "./lib/auth";
-import { addExpenseGroup, ExpenseGroup, listExpenseGroups, updateExpenseMember } from "./lib/data";
+import { addExpenseGroup, deleteExpenseGroup, ExpenseGroup, listExpenseGroups, updateExpenseMember } from "./lib/data";
+import { peso, splitLines } from "./lib/format";
 
 export default function Expenses() {
   const { user, profile } = useAuth();
@@ -35,10 +36,25 @@ export default function Expenses() {
     else load();
   };
 
+  const removeGroup = (group: ExpenseGroup) => {
+    Alert.alert("Delete expense group?", group.name, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const { error } = await deleteExpenseGroup(group.id);
+          if (error) Alert.alert("Could not delete group", error);
+          else load();
+        },
+      },
+    ]);
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/dashboard")} style={styles.back}>
           <Ionicons name="arrow-back" size={22} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Group Expenses</Text>
@@ -75,6 +91,9 @@ export default function Expenses() {
                     <Text style={styles.groupMeta}>PHP {Number(g.total || 0).toFixed(0)} · {members.length} people</Text>
                   </View>
                   <Text style={styles.unpaidText}>{unpaid ? `${unpaid} unpaid` : "Settled"}</Text>
+                  <TouchableOpacity onPress={() => removeGroup(g)} style={styles.deleteBtn}>
+                    <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                  </TouchableOpacity>
                 </View>
 
                 {members.map((m) => (
@@ -84,7 +103,7 @@ export default function Expenses() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.memberName}>{m.name}{m.is_self ? " (You)" : ""}</Text>
-                      <Text style={styles.memberAmt}>PHP {Number(m.amount || 0).toFixed(0)}</Text>
+                      <Text style={styles.memberAmt}>{peso(Number(m.amount || 0))}</Text>
                     </View>
                     <View style={[styles.checkBox, m.paid && styles.checkBoxOn]}>
                       {m.paid && <Ionicons name="checkmark" size={14} color={Colors.bg} />}
@@ -107,7 +126,7 @@ function Summary({ label, value }: { label: string; value: number }) {
   return (
     <View style={styles.sumCard}>
       <Text style={styles.sumLabel}>{label}</Text>
-      <Text style={styles.sumAmt}>PHP {value.toFixed(0)}</Text>
+      <Text style={styles.sumAmt}>{peso(value)}</Text>
     </View>
   );
 }
@@ -130,7 +149,7 @@ function AddGroupModal({ visible, onClose, userId, selfName, onSaved }: { visibl
 
   const save = async () => {
     const total = Number(amount);
-    const names = members.split(",").map((m) => m.trim()).filter(Boolean);
+    const names = splitLines(members);
     if (!userId || !name.trim() || !Number.isFinite(total) || total <= 0 || names.length === 0) {
       Alert.alert("Missing details", "Enter a group name, amount, and at least one member.");
       return;
@@ -213,6 +232,7 @@ const styles = StyleSheet.create({
   memberAmt: { color: Colors.textMuted, fontSize: 11 },
   checkBox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: Colors.border, justifyContent: "center", alignItems: "center" },
   checkBoxOn: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  deleteBtn: { width: 30, height: 30, borderRadius: 8, justifyContent: "center", alignItems: "center", backgroundColor: Colors.surfaceLight },
   empty: { alignItems: "center", paddingTop: 70, gap: 8 },
   emptyTitle: { color: Colors.text, fontSize: 17, fontWeight: "700" },
   emptySub: { color: Colors.textMuted, fontSize: 13, textAlign: "center", lineHeight: 19 },

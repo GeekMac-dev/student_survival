@@ -4,7 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Colors, Radius, Spacing } from "./theme";
 import { useAuth } from "./lib/auth";
-import { addReviewer, listReviewers, ReviewerItem } from "./lib/data";
+import { addReviewer, deleteReviewer, listReviewers, ReviewerItem } from "./lib/data";
+import { peso } from "./lib/format";
 
 export default function Reviewers() {
   const { user, profile } = useAuth();
@@ -32,10 +33,25 @@ export default function Reviewers() {
     return items.filter((r) => !q || r.title.toLowerCase().includes(q) || (r.subject ?? "").toLowerCase().includes(q));
   }, [items, search]);
 
+  const removeReviewer = (item: ReviewerItem) => {
+    Alert.alert("Delete reviewer?", item.title, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const { error } = await deleteReviewer(item.id);
+          if (error) Alert.alert("Could not delete reviewer", error);
+          else load();
+        },
+      },
+    ]);
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile")} style={styles.back}>
           <Ionicons name="arrow-back" size={22} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Reviewers</Text>
@@ -71,7 +87,10 @@ export default function Reviewers() {
                   {!!r.url && <Meta icon="link-outline" text="Link saved" />}
                 </View>
               </View>
-              <Text style={styles.price}>{Number(r.price || 0) === 0 ? "Free" : `PHP ${Number(r.price).toFixed(0)}`}</Text>
+              <Text style={styles.price}>{Number(r.price || 0) === 0 ? "Free" : peso(Number(r.price))}</Text>
+              <TouchableOpacity onPress={() => removeReviewer(r)} style={styles.deleteBtn}>
+                <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+              </TouchableOpacity>
             </View>
           ))
         )}
@@ -187,6 +206,7 @@ const styles = StyleSheet.create({
   revStat: { flexDirection: "row", alignItems: "center", gap: 3 },
   revStatText: { color: Colors.textMuted, fontSize: 11 },
   price: { color: Colors.text, fontSize: 13, fontWeight: "800" },
+  deleteBtn: { width: 30, height: 30, borderRadius: 8, justifyContent: "center", alignItems: "center", backgroundColor: Colors.surfaceLight },
   empty: { alignItems: "center", paddingTop: 70, gap: 8 },
   emptyTitle: { color: Colors.text, fontSize: 17, fontWeight: "700" },
   emptySub: { color: Colors.textMuted, fontSize: 13, textAlign: "center", lineHeight: 19 },

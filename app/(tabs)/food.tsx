@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Sta
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Spacing } from "../theme";
 import { useAuth } from "../lib/auth";
-import { addFood, FoodItem, listFoods } from "../lib/data";
+import { addFood, deleteFood, FoodItem, listFoods } from "../lib/data";
+import { peso } from "../lib/format";
 
 const filters = [
   { id: "all", label: "All" },
@@ -44,6 +45,21 @@ export default function Food() {
       return true;
     });
   }, [foods, filter, search]);
+
+  const removeFood = (item: FoodItem) => {
+    Alert.alert("Delete saved food?", item.name, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const { error } = await deleteFood(item.id);
+          if (error) Alert.alert("Could not delete food", error);
+          else load();
+        },
+      },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -90,9 +106,12 @@ export default function Food() {
                   <Text style={styles.shopName}>{f.shop}{f.distance ? ` · ${f.distance}` : ""}</Text>
                 </View>
                 <View style={{ alignItems: "flex-end" }}>
-                  <Text style={styles.price}>PHP {Number(f.price || 0).toFixed(0)}</Text>
+                  <Text style={styles.price}>{peso(Number(f.price || 0))}</Text>
                   <Text style={styles.open}>{f.open ? "Open" : "Closed"}</Text>
                 </View>
+                <TouchableOpacity onPress={() => removeFood(f)} style={styles.deleteBtn}>
+                  <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                </TouchableOpacity>
               </View>
             ))}
           </View>
@@ -193,12 +212,13 @@ const styles = StyleSheet.create({
   chipText: { color: Colors.textMuted, fontSize: 13, fontWeight: "600" },
   results: { color: Colors.textMuted, fontSize: 12, marginTop: 16, marginBottom: 10 },
   list: { gap: 10 },
-  card: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: Colors.surface, borderRadius: Radius.lg, padding: 14, borderWidth: 1, borderColor: Colors.border },
+  card: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: Colors.surface, borderRadius: Radius.lg, padding: 14, borderWidth: 1, borderColor: Colors.border },
   foodIcon: { width: 42, height: 42, borderRadius: 12, backgroundColor: Colors.primary + "18", justifyContent: "center", alignItems: "center" },
   foodName: { color: Colors.text, fontSize: 14, fontWeight: "800" },
   shopName: { color: Colors.textMuted, fontSize: 12, marginTop: 2 },
   price: { color: Colors.text, fontSize: 14, fontWeight: "900" },
   open: { color: Colors.textMuted, fontSize: 11, marginTop: 2 },
+  deleteBtn: { width: 30, height: 30, borderRadius: 8, justifyContent: "center", alignItems: "center", backgroundColor: Colors.surfaceLight },
   empty: { alignItems: "center", paddingTop: 60 },
   emptyT: { color: Colors.text, fontSize: 16, fontWeight: "700", marginTop: 12 },
   emptyS: { color: Colors.textMuted, fontSize: 13, marginTop: 4, textAlign: "center" },

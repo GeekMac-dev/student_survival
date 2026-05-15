@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "./supabase";
+import { isSupabaseConfigured, supabase, supabaseSetupMessage } from "./supabase";
 
 export type Profile = {
   id: string;
@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
+    if (!isSupabaseConfigured) return;
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
     if (data) setProfile(data as Profile);
   };
@@ -39,6 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null;
       setUser(u);
@@ -56,11 +62,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured) return { error: supabaseSetupMessage };
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   };
 
   const signUp = async (email: string, password: string, p: Partial<Profile>) => {
+    if (!isSupabaseConfigured) return { error: supabaseSetupMessage };
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error: error.message };
     if (data.user) {
@@ -77,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    if (!isSupabaseConfigured) return { error: supabaseSetupMessage };
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: typeof window !== "undefined" ? window.location.origin : undefined },
@@ -85,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
+    if (!isSupabaseConfigured) return { error: supabaseSetupMessage };
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     return { error: error?.message ?? null };
   };
